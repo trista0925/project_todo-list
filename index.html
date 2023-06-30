@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>todo-list</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/all.css" type="text/css">
+</head>
+
+<body>
+  <div id="app">
+    <task-list :tasks="tasks"></task-list>
+  </div>
+  <template id="task-list">
+    <section class="tasks">
+      <img :src="header" class="header-bg">
+      <div class="header">
+        <h1>
+          TODO
+        </h1>
+        <div class="mode-toggle" @click="modeToggle" :class="darkDark">
+          <img class="nav-icon" :src="navModeIcon">
+        </div>
+      </div>
+      <div class="tasks-new">
+        <input type="text" class="input-group-field" v-model="newTask" @keyup.enter="addTask"
+          placeholder="Create a new todo...">
+      </div>
+      <transition-group name="fade">
+        <div v-for="(task, index) in tasks" :task="task" :key="task" @click="completeTask(task)" class="tasks-item">
+          <div class="check-button" :class="{ completed: task.completed }">
+          </div>
+          <div class="tasks-item-toggle" :class="{ completed: task.completed }">
+            {{ task.title }}
+          </div>
+          <div class="tasks-item-remove" @click="removeTask(index)">
+            <img src="image/icon-cross.svg" alt="" class="img100">
+          </div>
+        </div>
+      </transition-group>
+      <div class="action">
+        <div>
+          <transition name="fade">
+            <small v-if="incomplete">{{ incomplete }}</small>
+          </transition> items left
+        </div>
+        <div class="clear-btn" @click="clearCompleted">
+          Clear Completed
+        </div>
+        <div class="clear-btn" @click="clearAll">
+          Clear All
+        </div>
+      </div>
+      <div class="footer">© 2023 Trista. All rights reserved.</div>
+    </section>
+  </template>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.js"></script>
+<script>
+  Vue.component('task-list', {
+    template: '#task-list',
+    data() {
+      return {
+        tasks: [],
+        newTask: '',
+        navModeIcon: './image/icon-sun.svg',
+        header: './image/bg-desktop-light.jpg',
+      };
+    },
+    mounted() {
+      if (localStorage.getItem('tasks')) {
+        try {
+          this.tasks = JSON.parse(localStorage.getItem('tasks'));
+        } catch (e) {
+          localStorage.removeItem('tasks');
+        }
+      }
+    },
+    computed: {
+      incomplete() {
+        return this.tasks.filter(this.inProgress).length;
+      },
+      darkDark() {
+        return this.darkMode && 'darkmode-toggled'
+      },
+    },
+    methods: {
+      addTask() {
+        if (!this.newTask) return;
+        this.tasks.push({
+          title: this.newTask,
+          completed: false
+        });
+        this.newTask = '';
+        this.saveTasks();
+      },
+      completeTask(task) {
+        task.completed = !task.completed;
+      },
+      removeTask(index) {
+        this.tasks.splice(index, 1);
+        this.saveTasks();
+      },
+      clearCompleted() {
+        this.tasks = this.tasks.filter(this.inProgress);
+        this.saveTasks();
+      },
+      clearAll() {
+        this.tasks = [];
+        this.saveTasks();
+      },
+      saveTasks() {
+        let parsed = JSON.stringify(this.tasks);
+        localStorage.setItem('tasks', parsed);
+      },
+      inProgress(task) {
+        return !this.isCompleted(task);
+      },
+      isCompleted(task) {
+        return task.completed;
+      },
+      dark() {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        this.darkMode = true
+        this.$emit('dark')
+        this.navModeIcon = './image/icon-moon.svg'
+        this.header = './image/bg-desktop-dark.jpg'
+      },
+      light() {
+        document.documentElement.setAttribute('data-theme', '')
+        this.darkMode = false
+        this.$emit('light')
+        this.navModeIcon = './image/icon-sun.svg'
+        this.header = './image/bg-desktop-light.jpg'
+      },
+      modeToggle() {
+        if (this.darkMode || document.querySelector('body').classList.contains('dark-mode')) {
+          this.light()
+        } else {
+          this.dark()
+        }
+      },
+    }
+  });
+
+  new Vue({
+    el: '#app',
+    // data: {
+    //   tasks: [
+    //     {
+    //       title: 'weight training',
+    //       completed: true
+    //     },
+    //     {
+    //       title: 'skydiving',
+    //       completed: false
+    //     }, {
+    //       title: 'hiking',
+    //       completed: false
+    //     }
+    //   ]
+    // },
+  });
+</script>
+
+</html>
